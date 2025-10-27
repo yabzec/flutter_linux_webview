@@ -129,32 +129,39 @@ class _WebViewV4ExampleState extends State<WebViewV4Example>
   Widget _buildActionsMenu() {
     return FloatingActionButton(
       onPressed: () async {
-        final url = await _controller.currentUrl();
-        final title = await _controller.getTitle();
-        
-        if (!mounted) return;
-        
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('WebView Info'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Title: ${title ?? "N/A"}'),
-                const SizedBox(height: 8),
-                Text('URL: ${url ?? "N/A"}'),
+        try {
+          final url = await _controller.currentUrl();
+          final title = await _controller.getTitle();
+          
+          if (!mounted) return;
+          
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('WebView Info'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Title: ${title ?? "N/A"}'),
+                  const SizedBox(height: 8),
+                  Text('URL: ${url ?? "N/A"}'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
       },
       child: const Icon(Icons.info),
     );

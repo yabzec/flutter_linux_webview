@@ -26,7 +26,9 @@ Note: If you are using Flutter prior to version 3.10, the example apps will fail
 ---
 
 - **integration_test/flutter_linux_webview_test.dart**
-  - This came from webview_flutter v3.0.4 example/integration_test
+  - Integration tests from webview_flutter v3.0.4 example
+  - Currently uses v3 API pattern
+  - Note: Integration tests for v4 API are not yet implemented
 
 ## How to run
 
