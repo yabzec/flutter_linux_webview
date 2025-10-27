@@ -33,9 +33,53 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
+import 'linux_webview_controller.dart';
+import 'linux_navigation_delegate.dart';
+import 'linux_webview_widget_impl.dart';
+import 'linux_webview_cookie_manager.dart';
 import 'webview_linux_widget.dart';
 
-class LinuxWebView implements WebViewPlatform {
+/// Linux implementation of [WebViewPlatform].
+class LinuxWebView extends WebViewPlatform {
+  /// Registers this class as the default instance of [WebViewPlatform].
+  static void registerWith() {
+    WebViewPlatform.instance = LinuxWebView();
+  }
+
+  @override
+  LinuxWebViewController createPlatformWebViewController(
+    PlatformWebViewControllerCreationParams params,
+  ) {
+    return LinuxWebViewController(params);
+  }
+
+  @override
+  LinuxNavigationDelegate createPlatformNavigationDelegate(
+    PlatformNavigationDelegateCreationParams params,
+  ) {
+    return LinuxNavigationDelegate(params);
+  }
+
+  @override
+  LinuxWebViewWidget createPlatformWebViewWidget(
+    PlatformWebViewWidgetCreationParams params,
+  ) {
+    return LinuxWebViewWidget(params);
+  }
+
+  @override
+  LinuxWebViewCookieManager createPlatformCookieManager(
+    PlatformWebViewCookieManagerCreationParams params,
+  ) {
+    return LinuxWebViewCookieManager(params);
+  }
+
+  // ===== Legacy v3 API support (for backward compatibility) =====
+
+  /// Legacy build method for webview_flutter v3 compatibility.
+  /// 
+  /// This method is deprecated and will be removed in a future version.
+  /// Use the new v4 API with WebViewController and WebViewWidget instead.
   @override
   Widget build({
     required BuildContext context,
@@ -53,6 +97,15 @@ class LinuxWebView implements WebViewPlatform {
     );
   }
 
+  /// Legacy clearCookies method for webview_flutter v3 compatibility.
+  /// 
+  /// This method is deprecated and will be removed in a future version.
+  /// Use WebViewCookieManager instead.
   @override
-  Future<bool> clearCookies() => MethodChannelWebViewPlatform.clearCookies();
+  Future<bool> clearCookies() async {
+    final manager = LinuxWebViewCookieManager(
+      const PlatformWebViewCookieManagerCreationParams(),
+    );
+    return manager.clearCookies();
+  }
 }
