@@ -33,6 +33,8 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_linux_webview/flutter_linux_webview.dart';
 
+/// Simple example using webview_flutter v3 API (legacy).
+/// For the new v4 API example, see v4_example.dart
 void main() {
   // ensureInitialized() is required if the plugin is initialized before runApp()
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +46,7 @@ void main() {
     'autoplay-policy': 'no-user-gesture-required',
   });
 
-  // Configure [WebView] to use the [LinuxWebView].
+  // Configure [WebView] to use the [LinuxWebView] (v3 API pattern).
   WebView.platform = LinuxWebView();
 
   runApp(const MaterialApp(home: _WebViewExample()));
