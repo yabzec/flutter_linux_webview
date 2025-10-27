@@ -1,3 +1,16 @@
+## 0.2.0
+
+* **Added support for webview_flutter v4.x** while maintaining backward compatibility with v3.0.4
+  * Implemented new platform interface v2.0.0 factory methods
+  * Added `LinuxWebViewController` for v4 API
+  * Added `LinuxWebViewWidget` for v4 API
+  * Added `LinuxNavigationDelegate` for v4 API
+  * Added `LinuxWebViewCookieManager` for v4 API
+  * Legacy v3 API (`WebView.platform = LinuxWebView()`) still supported for backward compatibility
+  * Updated example to demonstrate v4 API usage
+* Updated minimum supported webview_flutter_platform_interface to ^2.0.0
+* Updated documentation with examples for both v3 and v4 APIs
+
 ## 0.1.3
 
 * Centralized third-party source code in `//third_party_base/` and separated it from our code.

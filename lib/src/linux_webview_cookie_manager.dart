@@ -26,13 +26,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-library flutter_linux_webview;
+import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
-export 'src/third_party/webview_flutter_android/lib/webview_linux_cookie_manager.dart';
-export 'src/linux_webview_plugin.dart';
-export 'src/webview_linux.dart';
-export 'src/webview_linux_widget.dart';
-export 'src/linux_webview_controller.dart';
-export 'src/linux_navigation_delegate.dart';
-export 'src/linux_webview_widget_impl.dart';
-export 'src/linux_webview_cookie_manager.dart';
+import 'third_party/webview_flutter_android/lib/webview_linux_cookie_manager.dart'
+    as legacy;
+
+/// Linux implementation of [PlatformWebViewCookieManager].
+class LinuxWebViewCookieManager extends PlatformWebViewCookieManager {
+  /// Creates a new [LinuxWebViewCookieManager].
+  LinuxWebViewCookieManager(PlatformWebViewCookieManagerCreationParams params)
+      : super.implementation(params);
+
+  final legacy.WebViewLinuxCookieManager _legacyManager =
+      legacy.WebViewLinuxCookieManager();
+
+  @override
+  Future<bool> clearCookies() {
+    return _legacyManager.clearCookies();
+  }
+
+  @override
+  Future<void> setCookie(WebViewCookie cookie) {
+    return _legacyManager.setCookie(cookie);
+  }
+}

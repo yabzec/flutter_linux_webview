@@ -1,10 +1,10 @@
 # flutter\_linux\_webview
 
-A Linux Desktop implementation for the [webview_flutter](https://pub.dev/packages/webview_flutter/versions/3.0.4) (v3.0.4) plugin, powered by CEF (Chromium Embedded Framework).
+A Linux Desktop implementation for the [webview_flutter](https://pub.dev/packages/webview_flutter) plugin, supporting both v3.0.4 and v4.x, powered by CEF (Chromium Embedded Framework).
 
-[webview_flutter](https://pub.dev/packages/webview_flutter/versions/3.0.4) is a [federated package](https://docs.flutter.dev/packages-and-plugins/developing-packages#federated-plugins), consisting of an app-facing package, platform interface package, and platform implementation packages.
+[webview_flutter](https://pub.dev/packages/webview_flutter) is a [federated package](https://docs.flutter.dev/packages-and-plugins/developing-packages#federated-plugins), consisting of an app-facing package, platform interface package, and platform implementation packages.
 
-This plugin package provides the Linux implementation for [webview_flutter](https://pub.dev/packages/webview_flutter/versions/3.0.4) (v3.0.4) using CEF.
+This plugin package provides the Linux implementation for [webview_flutter](https://pub.dev/packages/webview_flutter) using CEF. It supports both the v3.0.4 API (with webview_flutter_platform_interface ^1.8.0) and the newer v4.x API (with webview_flutter_platform_interface ^2.0.0).
 
 Depending on the architecture, the following CEF binary distribution provided at https://cef-builds.spotifycdn.com/index.html is downloaded in the source directory of the plugin at the first build time:
 - for x86_64: [cef_binary_96.0.18+gfe551e4+chromium-96.0.4664.110_linux64_minimal](https://cef-builds.spotifycdn.com/cef_binary_96.0.18%2Bgfe551e4%2Bchromium-96.0.4664.110_linux64_minimal.tar.bz2)
@@ -40,22 +40,34 @@ Go to `example/`.
 
 ## 1. Depend on it
 
-Add `flutter_linux_webview:^0.1.0` and `webview_flutter:^3.0.4` as dependencies in your pubspec.yaml file.
+This package now supports both webview_flutter v3 and v4. Choose the version that fits your needs:
 
-Run these commands:
+**For webview_flutter v4.x (recommended):**
+
+Add `flutter_linux_webview:^0.2.0` and `webview_flutter:^4.0.0` as dependencies in your pubspec.yaml file.
 
 ```sh
- $ flutter pub add flutter_linux_webview:'^0.1.0'
- $ flutter pub add webview_flutter:'^3.0.4'
+ $ flutter pub add flutter_linux_webview:'^0.2.0'
+ $ flutter pub add webview_flutter:'^4.0.0'
 ```
 
 This will add lines like this to your package's pubspec.yaml (and run an implicit flutter pub get):
 
 ```yaml
 dependencies:
-  webview_flutter: ^3.0.4
-  flutter_linux_webview: ^0.1.0
+  webview_flutter: ^4.0.0
+  flutter_linux_webview: ^0.2.0
 ```
+
+**For webview_flutter v3.0.4 (backward compatibility):**
+
+```yaml
+dependencies:
+  webview_flutter: ^3.0.4
+  flutter_linux_webview: ^0.2.0
+```
+
+The package maintains backward compatibility with v3.0.4 API.
 
 ## 2. Modify linux/CMakeLists.txt of your application
 
@@ -75,6 +87,59 @@ The plugin will hang if above configuration is not added.
 
 ## 3. Import and Setup
 
+### For webview_flutter v4.x (New API)
+
+Now in your Dart code, import these:
+
+```dart
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_linux_webview/flutter_linux_webview.dart';
+```
+
+Before creating the first WebView, you must call `LinuxWebViewPlugin.initialize()` and register the Linux platform:
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize the plugin
+  LinuxWebViewPlugin.initialize(options: <String, String?>{
+    'user-agent': 'UA String',
+    'remote-debugging-port': '8888',
+    'autoplay-policy': 'no-user-gesture-required',
+  });
+  
+  // Register the Linux implementation
+  LinuxWebView.registerWith();
+  
+  runApp(MyApp());
+}
+```
+
+With v4 API, you create a `WebViewController` and use `WebViewWidget`:
+
+```dart
+late final WebViewController controller;
+
+@override
+void initState() {
+  super.initState();
+  controller = WebViewController()
+    ..loadRequest(Uri.parse('https://flutter.dev'));
+}
+
+@override
+Widget build(BuildContext context) {
+  return WebViewWidget(controller: controller);
+}
+```
+
+In Flutter 3.10 or later, you must call `LinuxWebViewPlugin.terminate()` when the application exits.
+
+See the v4 example below for a complete working example.
+
+### For webview_flutter v3.0.4 (Legacy API)
+
 Now in your Dart code, import these:
 
 ```dart
@@ -84,7 +149,7 @@ import 'package:flutter_linux_webview/flutter_linux_webview.dart';
 
 Before creating the first [WebView](https://pub.dev/documentation/webview_flutter/3.0.4/webview_flutter/WebView-class.html), you must call [LinuxWebViewPlugin.initialize].
 
-You must also set "[WebView.platform](https://pub.dev/documentation/webview_flutter/3.0.4/webview_flutter/WebView/platform.html) = [LinuxWebView](./lib/src/webview_linux.dart)\(\);" to configure [WebView](https://pub.dev/documentation/webview_flutter/3.0.4/webview_flutter/WebView-class.html) to use the Linux implementation.
+You must also set `WebView.platform = LinuxWebView()` to configure [WebView](https://pub.dev/documentation/webview_flutter/3.0.4/webview_flutter/WebView-class.html) to use the Linux implementation.
 
 After that, you can use a [WebView](https://pub.dev/documentation/webview_flutter/3.0.4/webview_flutter/WebView-class.html) widget.
 
@@ -92,9 +157,93 @@ In Flutter 3.10 or later (as of Flutter 3.13), you must call
 [LinuxWebViewPlugin.terminate] when the application exits.  
 Prior to Flutter 3.10, you do not need to call [LinuxWebViewPlugin.terminate] because this plugin automatically exits.
 
-See the example below.
+See the v3 example below.
 
-## Example
+## Example (v4 API - Recommended)
+
+```dart
+import 'dart:async';
+// Required to use AppExitResponse for Flutter 3.10 or later
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_linux_webview/flutter_linux_webview.dart';
+
+void main() {
+  // ensureInitialized() is required if the plugin is initialized before runApp()
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Run `LinuxWebViewPlugin.initialize()` first before creating a WebView.
+  LinuxWebViewPlugin.initialize(options: <String, String?>{
+    'user-agent': 'UA String',
+    'remote-debugging-port': '8888',
+    'autoplay-policy': 'no-user-gesture-required',
+  });
+
+  // Register the Linux implementation
+  LinuxWebView.registerWith();
+
+  runApp(const MaterialApp(home: _WebViewExample()));
+}
+
+class _WebViewExample extends StatefulWidget {
+  const _WebViewExample({Key? key}) : super(key: key);
+
+  @override
+  _WebViewExampleState createState() => _WebViewExampleState();
+}
+
+class _WebViewExampleState extends State<_WebViewExample>
+    with WidgetsBindingObserver {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Create controller with v4 API
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse('https://flutter.dev'));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// For Flutter 3.10 or later
+  @override
+  Future<AppExitResponse> didRequestAppExit() async {
+    await LinuxWebViewPlugin.terminate();
+    return AppExitResponse.exit;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('flutter_linux_webview example (v4)'),
+      ),
+      body: WebViewWidget(controller: _controller),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final url = await _controller.currentUrl();
+          final title = await _controller.getTitle();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Title: $title, URL: $url')),
+          );
+        },
+        child: const Icon(Icons.favorite),
+      ),
+    );
+  }
+}
+```
+
+## Example (v3.0.4 API - Legacy)
 
 ```dart
 import 'dart:async';
@@ -515,8 +664,10 @@ Not implemented on Linux. Will be supported in the future.
 
 ## TODO
 
-* [ ] **Upgrade to webview_flutter v4 interface**
-    * [ ] and add tests
+* [x] **Upgrade to webview_flutter v4 interface** (Completed in v0.2.0)
+    * Implemented new platform interface v2.0.0
+    * Added support for webview_flutter v4.x
+    * Maintained backward compatibility with v3.0.4
 * [ ] Investigate and fix the WebView creation stability issues.
 * [ ] Implement `javascriptChannels`
 * [ ] Implement `navigationDelegate`
